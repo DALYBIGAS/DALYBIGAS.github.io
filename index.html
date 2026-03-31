@@ -1,529 +1,167 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Daly is here</title>
-  <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #ffffff;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daly 的个人网站 | AI Infra & Accelerator Design</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-glow: #38bdf8;
+            --gradient-primary: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            --card-bg: rgba(30, 41, 59, 0.5);
+            --card-border: rgba(255, 255, 255, 0.08);
+        }
 
-    #app {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      background:
-        radial-gradient(circle at 50% 28%, rgba(255,255,255,1) 0%, rgba(250,250,250,1) 36%, rgba(241,241,241,1) 100%);
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      cursor: grab;
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.08), transparent 25%);
+            overflow-x: hidden;
+        }
 
-    canvas.dragging {
-      cursor: grabbing;
-    }
+        .container {
+            max-width: 800px;
+            width: 90%;
+            padding: 3rem 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
 
-    .hint {
-      position: absolute;
-      left: 20px;
-      bottom: 18px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: rgba(0,0,0,0.62);
-      background: rgba(255,255,255,0.75);
-      border: 1px solid rgba(0,0,0,0.06);
-      box-shadow: 0 8px 28px rgba(0,0,0,0.08);
-      border-radius: 12px;
-      backdrop-filter: blur(6px);
-      user-select: none;
-      pointer-events: none;
-    }
-  </style>
+        /* 顶部欢迎语 */
+        .greeting {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            letter-spacing: -0.05rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 玻璃拟物卡片 */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+            font-size: 1.05rem;
+        }
+
+        /* 技能标签 */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 1.5rem 0 2.5rem 0;
+        }
+
+        .tag {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-glow);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-family: 'Fira Code', monospace;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        /* 特别强调的 GAMMA 项目 */
+        .project-highlight {
+            background: linear-gradient(to right, rgba(56, 189, 248, 0.05), rgba(129, 140, 248, 0.05));
+            border-left: 4px solid var(--accent-glow);
+            padding: 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin-top: 2rem;
+        }
+
+        .project-highlight p {
+            margin-bottom: 0;
+            color: var(--text-main);
+        }
+
+        .gamma-text {
+            font-family: 'Fira Code', monospace;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .greeting { font-size: 2rem; }
+            .glass-card { padding: 1.8rem; }
+        }
+    </style>
 </head>
 <body>
-  <div id="app">
-    <div class="hint"></div>
-  </div>
 
-  <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.160.1/build/three.module.js';
+    <div class="container">
+        <h1 class="greeting">大家好，这里是 Daly 的个人网站。</h1>
+
+        <div class="glass-card">
+            <h2>🧑‍💻 关于我 (About Me)</h2>
+            <p>你好！我的主要研究方向是 <strong>AI 基础设施 (AI Infra)</strong> 与 <strong>硬件加速器设计 (Accelerator Design)</strong>。</p>
+            <p>我致力于探索人工智能模型在底层硬件上的高效执行，专注于：</p>
+            
+            <div class="tags">
+                <span class="tag">软硬件协同设计 (Co-design)</span>
+                <span class="tag">AI 编译器优化</span>
+                <span class="tag">系统级架构仿真</span>
+            </div>
+
+            <div class="project-highlight">
+                <p>在我的 GitHub 主页中，你可以重点关注我设计开发的端到端系统级评估平台 —— <span class="gamma-text">GAMMA</span> 🚀</p>
+            </div>
+        </div>
+    </div>
 
-    const app = document.getElementById('app');
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    app.appendChild(renderer.domElement);
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
-
-    const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 0.25, 4.8);
-    camera.lookAt(0, -0.22, 0);
-
-    const ambient = new THREE.HemisphereLight(0xffffff, 0xe7e2da, 1.25);
-    scene.add(ambient);
-
-    const key = new THREE.DirectionalLight(0xffffff, 1.75);
-    key.position.set(2.8, 3.8, 4.4);
-    key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
-    key.shadow.camera.left = -4;
-    key.shadow.camera.right = 4;
-    key.shadow.camera.top = 4;
-    key.shadow.camera.bottom = -4;
-    scene.add(key);
-
-    const fill = new THREE.DirectionalLight(0xfff7ec, 0.6);
-    fill.position.set(-2.6, 1.6, 3.2);
-    scene.add(fill);
-
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(20, 20),
-      new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.12 })
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -2.15;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    function createReceiptTexture() {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1024;
-      canvas.height = 2048;
-      const ctx = canvas.getContext('2d');
-
-      const base = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      base.addColorStop(0, '#fffef9');
-      base.addColorStop(0.45, '#fffdf7');
-      base.addColorStop(1, '#f9f6ed');
-      ctx.fillStyle = base;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < 9000; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const a = Math.random() * 0.028;
-        const s = Math.random() * 1.5 + 0.35;
-        ctx.fillStyle = `rgba(80,70,45,${a})`;
-        ctx.fillRect(x, y, s, s);
-      }
-
-      ctx.strokeStyle = 'rgba(140,140,140,0.13)';
-      ctx.lineWidth = 1;
-      for (let y = 155; y < canvas.height; y += 122) {
-        ctx.beginPath();
-        ctx.moveTo(64, y);
-        ctx.lineTo(canvas.width - 64, y);
-        ctx.stroke();
-      }
-
-      const padX = 92;
-      let y = 150;
-      ctx.fillStyle = '#191919';
-      ctx.textAlign = 'left';
-
-      ctx.font = '700 52px system-ui, sans-serif';
-      ctx.fillText('THERMAL RECEIPT', padX, y);
-      y += 60;
-
-      ctx.font = '400 24px system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(0,0,0,0.62)';
-      ctx.fillText('interactive paper simulation', padX, y);
-      y += 82;
-
-      ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-      ctx.setLineDash([5, 6]);
-      ctx.beginPath();
-      ctx.moveTo(padX, y);
-      ctx.lineTo(canvas.width - padX, y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      y += 110;
-
-      ctx.fillStyle = '#111';
-      ctx.font = '700 42px system-ui, sans-serif';
-      y += 70;
-      ctx.fillText('大家好，这里是Daly的个人网站。', padX, y);
-      y += 84;
-
-      ctx.font = '400 27px system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(0,0,0,0.72)';
-            const introText = [
-        '🧑‍💻 关于我 (About Me)',
-        '你好！我的主要研究方向是 AI 基础设施 (AI Infra) 与',
-        '硬件加速器设计 (Accelerator Design)。我致力于探索',
-        '人工智能模型在底层硬件上的高效执行，专注于软硬件协同设计',
-        '（Hardware-Software Co-design）、AI 编译器优化',
-        '以及系统级架构仿真。',
-        '',
-        '在我的 GitHub 主页中，你可以重点关注我设计开发的',
-        '端到端系统级评估平台 —— GAMMA。'
-      ];
-
-      ctx.font = '700 36px system-ui, sans-serif';
-      ctx.fillStyle = '#111';
-      ctx.fillText(introText[0], padX, y);
-      y += 72;
-
-      ctx.font = '400 24px system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(0,0,0,0.78)';
-      for (let i = 1; i < introText.length; i++) {
-        const line = introText[i];
-        if (!line) {
-          y += 24;
-          continue;
-        }
-        ctx.fillText(line, padX, y);
-        y += 44;
-      }
-
-      y += 30;
-
-      y += 20;
-      ctx.strokeStyle = 'rgba(0,0,0,0.24)';
-      ctx.beginPath();
-      ctx.moveTo(padX, y);
-      ctx.lineTo(canvas.width - padX, y);
-      ctx.stroke();
-      y += 980;
-
-      ctx.fillStyle = 'rgba(0,0,0,0.22)';
-      ctx.font = '400 20px system-ui, sans-serif';
-      ctx.fillText('daly personal website / paper physics demo', padX, y);
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
-      tex.wrapS = THREE.ClampToEdgeWrapping;
-      tex.wrapT = THREE.ClampToEdgeWrapping;
-      return tex;
-    }
-
-    const receiptTexture = createReceiptTexture();
-
-    class Particle {
-      constructor(x, y, z, pinned = false) {
-        this.pos = new THREE.Vector3(x, y, z);
-        this.prev = new THREE.Vector3(x, y, z);
-        this.base = new THREE.Vector3(x, y, z);
-        this.acc = new THREE.Vector3();
-        this.invMass = pinned ? 0 : 1;
-        this.pinned = pinned;
-      }
-
-      addForce(f) {
-        if (this.invMass === 0) return;
-        this.acc.add(f);
-      }
-
-      integrate(dtSq, damping) {
-        if (this.invMass === 0) {
-          this.pos.copy(this.base);
-          this.prev.copy(this.base);
-          this.acc.set(0, 0, 0);
-          return;
-        }
-        const vel = this.pos.clone().sub(this.prev).multiplyScalar(damping);
-        const next = this.pos.clone().add(vel).add(this.acc.clone().multiplyScalar(dtSq));
-        this.prev.copy(this.pos);
-        this.pos.copy(next);
-        this.acc.set(0, 0, 0);
-      }
-    }
-
-    class Constraint {
-      constructor(a, b, stiffness = 1) {
-        this.a = a;
-        this.b = b;
-        this.rest = a.pos.distanceTo(b.pos);
-        this.stiffness = stiffness;
-      }
-
-      solve() {
-        const delta = new THREE.Vector3().subVectors(this.b.pos, this.a.pos);
-        const dist = delta.length();
-        if (dist < 1e-6) return;
-
-        const diff = (dist - this.rest) / dist;
-        const invA = this.a.invMass;
-        const invB = this.b.invMass;
-        const invSum = invA + invB;
-        if (invSum === 0) return;
-
-        const correction = delta.multiplyScalar(this.stiffness * diff);
-        if (invA > 0) this.a.pos.addScaledVector(correction, invA / invSum);
-        if (invB > 0) this.b.pos.addScaledVector(correction, -invB / invSum);
-      }
-    }
-
-    const receipt = {
-      width: 1.52,
-      height: 3.05,
-      segX: 26,
-      segY: 68,
-      particles: [],
-      constraints: []
-    };
-
-    function idx(x, y) {
-      return y * (receipt.segX + 1) + x;
-    }
-
-    function buildReceiptPhysics() {
-      receipt.particles.length = 0;
-      receipt.constraints.length = 0;
-
-      for (let y = 0; y <= receipt.segY; y++) {
-        const v = y / receipt.segY;
-        for (let x = 0; x <= receipt.segX; x++) {
-          const u = x / receipt.segX;
-          const px = (u - 0.5) * receipt.width;
-          const py = (0.5 - v) * receipt.height + 1.05;
-          const pz = 0;
-          const pinned = y === 0; // top edge entire row pinned: never just three points
-          receipt.particles.push(new Particle(px, py, pz, pinned));
-        }
-      }
-
-      const addConstraint = (x1, y1, x2, y2, stiff) => {
-        receipt.constraints.push(
-          new Constraint(receipt.particles[idx(x1, y1)], receipt.particles[idx(x2, y2)], stiff)
-        );
-      };
-
-      for (let y = 0; y <= receipt.segY; y++) {
-        for (let x = 0; x <= receipt.segX; x++) {
-          if (x < receipt.segX) addConstraint(x, y, x + 1, y, y === 0 ? 1.0 : 0.96);
-          if (y < receipt.segY) addConstraint(x, y, x, y + 1, y < 2 ? 1.0 : 0.92);
-          if (x < receipt.segX && y < receipt.segY) {
-            addConstraint(x, y, x + 1, y + 1, 0.52);
-            addConstraint(x + 1, y, x, y + 1, 0.52);
-          }
-          if (x < receipt.segX - 1) addConstraint(x, y, x + 2, y, 0.32);
-          if (y < receipt.segY - 1) addConstraint(x, y, x, y + 2, 0.3);
-        }
-      }
-    }
-
-    buildReceiptPhysics();
-
-    const geometry = new THREE.PlaneGeometry(receipt.width, receipt.height, receipt.segX, receipt.segY);
-    const material = new THREE.MeshPhysicalMaterial({
-      map: receiptTexture,
-      side: THREE.DoubleSide,
-      roughness: 0.88,
-      metalness: 0.0,
-      sheen: 0.18,
-      sheenRoughness: 0.92,
-      sheenColor: new THREE.Color('#fff7e4'),
-      clearcoat: 0.03,
-      clearcoatRoughness: 0.95,
-      transmission: 0.0,
-      thickness: 0.01
-    });
-
-    const receiptMesh = new THREE.Mesh(geometry, material);
-    receiptMesh.castShadow = true;
-    receiptMesh.receiveShadow = false;
-    scene.add(receiptMesh);
-
-    const backGlow = new THREE.Mesh(
-      new THREE.PlaneGeometry(receipt.width * 1.02, receipt.height * 1.02, 1, 1),
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.15,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending
-      })
-    );
-    backGlow.position.z = -0.015;
-    receiptMesh.add(backGlow);
-
-    const raycaster = new THREE.Raycaster();
-    const mouseNdc = new THREE.Vector2();
-    const dragPlane = new THREE.Plane();
-    const dragPoint = new THREE.Vector3();
-    const pointerWorld = new THREE.Vector3();
-
-    let grabbed = null;
-    let grabOffset = new THREE.Vector3();
-    let currentTarget = new THREE.Vector3();
-    let lastTime = performance.now();
-    let accumulator = 0;
-
-    const sim = {
-      substep: 1 / 120,
-      damping: 0.988,
-      iterations: 7,
-      gravity: new THREE.Vector3(0, -13.5, 0),
-      airDrift: 0.12,
-      grabStrength: 0.42
-    };
-
-    function updateGeometry() {
-      const pos = geometry.attributes.position;
-      for (let i = 0; i < receipt.particles.length; i++) {
-        const p = receipt.particles[i].pos;
-        pos.setXYZ(i, p.x, p.y, p.z);
-      }
-      pos.needsUpdate = true;
-      geometry.computeVertexNormals();
-    }
-
-    function solveConstraints() {
-      for (let i = 0; i < sim.iterations; i++) {
-        for (let x = 0; x <= receipt.segX; x++) {
-          const p = receipt.particles[idx(x, 0)];
-          p.pos.copy(p.base);
-          p.prev.copy(p.base);
-        }
-
-        if (grabbed) {
-          grabbed.pos.lerp(currentTarget, sim.grabStrength);
-        }
-
-        for (let c = 0; c < receipt.constraints.length; c++) {
-          receipt.constraints[c].solve();
-        }
-
-        // hard-enforce entire top edge to remain perfectly straight and horizontal
-        for (let x = 0; x <= receipt.segX; x++) {
-          const p = receipt.particles[idx(x, 0)];
-          p.pos.copy(p.base);
-          p.prev.copy(p.base);
-        }
-      }
-    }
-
-    function simulate(dt) {
-      const dtSq = dt * dt;
-      const t = performance.now() * 0.001;
-
-      for (let i = 0; i < receipt.particles.length; i++) {
-        const p = receipt.particles[i];
-        if (p.invMass === 0) continue;
-
-        const wave = Math.sin(t * 1.5 + p.base.y * 2.3 + p.base.x * 3.0) * sim.airDrift;
-        p.addForce(sim.gravity);
-        p.addForce(new THREE.Vector3(wave * 0.22, 0, Math.cos(t * 1.1 + p.base.y * 2.6) * 0.08));
-        p.integrate(dtSq, sim.damping);
-      }
-
-      solveConstraints();
-    }
-
-    function setMouse(event) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouseNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouseNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-    }
-
-    function intersectPointerOnPlane(plane, out) {
-      raycaster.setFromCamera(mouseNdc, camera);
-      return raycaster.ray.intersectPlane(plane, out);
-    }
-
-    function nearestParticle(worldPoint) {
-      let best = null;
-      let minDistSq = Infinity;
-      const thresholdSq = 0.19 * 0.19;
-
-      for (let i = 0; i < receipt.particles.length; i++) {
-        const p = receipt.particles[i];
-        if (p.pinned) continue;
-        const d = p.pos.distanceToSquared(worldPoint);
-        if (d < minDistSq) {
-          minDistSq = d;
-          best = p;
-        }
-      }
-      return minDistSq < thresholdSq ? best : null;
-    }
-
-    renderer.domElement.addEventListener('pointerdown', (event) => {
-      if (event.button !== 0) return;
-      setMouse(event);
-
-      const hits = raycaster.setFromCamera(mouseNdc, camera), rayHits = raycaster.intersectObject(receiptMesh, false);
-      if (!rayHits.length) return;
-
-      const hit = rayHits[0];
-      const p = nearestParticle(hit.point);
-      if (!p) return;
-
-      grabbed = p;
-      currentTarget.copy(p.pos);
-      dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).clone().negate(), p.pos);
-      intersectPointerOnPlane(dragPlane, pointerWorld);
-      grabOffset.copy(p.pos).sub(pointerWorld);
-      renderer.domElement.classList.add('dragging');
-    });
-
-    window.addEventListener('pointermove', (event) => {
-      setMouse(event);
-      if (!grabbed) return;
-      if (intersectPointerOnPlane(dragPlane, dragPoint)) {
-        currentTarget.copy(dragPoint).add(grabOffset);
-        currentTarget.z = THREE.MathUtils.clamp(currentTarget.z, -1.1, 1.1);
-        currentTarget.x = THREE.MathUtils.clamp(currentTarget.x, -1.7, 1.7);
-        currentTarget.y = THREE.MathUtils.clamp(currentTarget.y, -2.5, 2.35);
-      }
-    });
-
-    window.addEventListener('pointerup', () => {
-      grabbed = null;
-      renderer.domElement.classList.remove('dragging');
-    });
-
-    window.addEventListener('pointerleave', () => {
-      grabbed = null;
-      renderer.domElement.classList.remove('dragging');
-    });
-
-    function animate(now) {
-      requestAnimationFrame(animate);
-
-      let delta = (now - lastTime) / 1000;
-      lastTime = now;
-      delta = Math.min(delta, 0.025);
-      accumulator += delta;
-
-      while (accumulator >= sim.substep) {
-        simulate(sim.substep);
-        accumulator -= sim.substep;
-      }
-
-      updateGeometry();
-      renderer.render(scene, camera);
-    }
-
-    updateGeometry();
-    requestAnimationFrame((t) => {
-      lastTime = t;
-      animate(t);
-    });
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
 </body>
 </html>
