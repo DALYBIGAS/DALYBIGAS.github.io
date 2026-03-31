@@ -11,9 +11,10 @@
             --text-main: #e2e8f0;
             --text-muted: #94a3b8;
             --accent-glow: #38bdf8;
+            --accent-purple: #818cf8;
             --gradient-primary: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-            --card-bg: rgba(30, 41, 59, 0.5);
-            --card-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(17, 24, 39, 0.6);
+            --card-border: rgba(255, 255, 255, 0.06);
         }
 
         * {
@@ -31,18 +32,28 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow-x: hidden;
+            overflow: hidden; /* 防止 canvas 滚动条 */
             position: relative;
         }
 
-        /* 鼠标追踪光晕 */
+        /* 1. 背景 Canvas 特效 */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 确保在所有内容之下 */
+        }
+
+        /* 鼠标追踪光晕（保留并优化，使其更柔和） */
         #cursor-glow {
             position: fixed;
             top: 0;
             left: 0;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
             transform: translate(-50%, -50%);
@@ -54,14 +65,15 @@
             max-width: 800px;
             width: 90%;
             padding: 3rem 0;
-            z-index: 1; /* 确保在光晕之上 */
-            perspective: 1000px; /* 为 3D 倾斜提供透视 */
+            z-index: 1; /* 确保在 canvas 和光晕之上 */
+            /* 删除了 perspective，因为不需要 3D 效果了 */
         }
 
         /* 顶部打字机欢迎语 */
         .greeting-container {
-            height: 60px; /* 固定高度防止打字时页面跳动 */
+            height: 60px;
             margin-bottom: 2rem;
+            text-align: center; /* 居中显示 */
         }
 
         .greeting {
@@ -92,123 +104,149 @@
         /* 玻璃拟物卡片 */
         .glass-card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 2.5rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            transition: transform 0.1s ease, box-shadow 0.3s ease, border 0.3s ease;
-            transform-style: preserve-3d;
-            will-change: transform;
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            /* 删除了 transform-style, will-change 以及 hover 时的 transform 晃动 */
+            transition: box-shadow 0.3s ease, border 0.3s ease;
         }
 
         .glass-card:hover {
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 35px 60px -10px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(56, 189, 248, 0.2);
         }
 
         h2 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 600;
-            margin-bottom: 1rem;
-            transform: translateZ(30px); /* 3D 浮雕效果 */
+            margin-bottom: 1.5rem;
+            color: #fff;
+            /* 删除了 translateZ */
         }
 
         p {
             color: var(--text-muted);
             margin-bottom: 1.2rem;
-            font-size: 1.05rem;
-            transform: translateZ(20px);
+            font-size: 1.1rem;
+            /* 删除了 translateZ */
         }
 
-        /* 技能标签交互 */
+        p strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* 技能标签 */
         .tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin: 1.5rem 0 2.5rem 0;
-            transform: translateZ(25px);
+            gap: 12px;
+            margin: 2rem 0 3rem 0;
+            /* 删除了 translateZ */
         }
 
         .tag {
-            background: rgba(56, 189, 248, 0.05);
+            background: rgba(56, 189, 248, 0.03);
             color: var(--accent-glow);
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-family: 'Fira Code', monospace;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.15);
             transition: all 0.3s ease;
             cursor: default;
         }
 
         .tag:hover {
-            background: rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.4);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(56, 189, 248, 0.2);
         }
 
-        /* GAMMA 项目高亮与按钮 */
+        /* GAMMA 项目高亮板块 */
         .project-highlight {
-            background: linear-gradient(to right, rgba(56, 189, 248, 0.05), rgba(129, 140, 248, 0.05));
-            border-left: 4px solid var(--accent-glow);
-            padding: 1.5rem;
-            border-radius: 0 12px 12px 0;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.03) 0%, rgba(129, 140, 248, 0.03) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 2rem;
+            border-radius: 16px;
             margin-top: 2rem;
-            transform: translateZ(30px);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            /* 删除了 translateZ */
         }
 
         .project-highlight p {
-            margin-bottom: 0;
+            margin-bottom: 1.5rem;
             color: var(--text-main);
-            transform: none;
         }
 
         .gamma-text {
             font-family: 'Fira Code', monospace;
             font-weight: 800;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             color: #fff;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
         }
 
-        /* GAMMA 交互按钮 */
+        /* 3. GAMMA 链接按钮容器 */
+        .gamma-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap; /* 移动端自动换行 */
+        }
+
+        /* 通用按钮样式 */
         .btn-gamma {
-            align-self: flex-start;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 24px;
-            background: var(--gradient-primary);
+            gap: 10px;
+            padding: 12px 24px;
             color: #fff;
             text-decoration: none;
             font-weight: 600;
             font-family: 'Fira Code', monospace;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+            font-size: 0.95rem;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             position: relative;
             overflow: hidden;
         }
 
+        /* v1 按钮样式（深色高雅） */
+        .btn-v1 {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-v1:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* v2 按钮样式（主色调渐变，更抢眼） */
+        .btn-v2 {
+            background: var(--gradient-primary);
+            border: 1px solid transparent;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-v2:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4);
+        }
+
+        /* 按钮扫光特效 */
         .btn-gamma::before {
             content: '';
             position: absolute;
             top: 0; left: -100%;
             width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .btn-gamma:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
         }
 
         .btn-gamma:hover::before {
@@ -218,13 +256,18 @@
         /* 响应式设计 */
         @media (max-width: 600px) {
             .greeting-container { height: 80px; }
-            .greeting { font-size: 2rem; }
-            .glass-card { padding: 1.8rem; }
-            #cursor-glow { display: none; } /* 移动端隐藏鼠标追踪 */
+            .greeting { font-size: 1.8rem; }
+            .glass-card { padding: 2rem; }
+            .project-highlight { padding: 1.5rem; }
+            .gamma-buttons { flex-direction: column; gap: 10px; }
+            .btn-gamma { width: 100%; justify-content: center; }
+            #cursor-glow { display: none; }
         }
     </style>
 </head>
 <body>
+
+    <canvas id="bg-canvas"></canvas>
 
     <div id="cursor-glow"></div>
 
@@ -246,16 +289,121 @@
 
             <div class="project-highlight">
                 <p>在我的 GitHub 主页中，你可以重点关注我设计开发的端到端系统级评估平台 —— <span class="gamma-text">GAMMA</span> 🚀</p>
-                <a href="#" class="btn-gamma">
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    Explore GAMMA
-                </a>
+                
+                <div class="gamma-buttons">
+                    <a href="https://github.com/DALYBIGAS/GAMMA-v1" target="_blank" rel="noopener noreferrer" class="btn-gamma btn-v1">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        Explore GAMMA v1
+                    </a>
+                    <a href="https://github.com/DALYBIGAS/GAMMA-v2" target="_blank" rel="noopener noreferrer" class="btn-gamma btn-v2">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        Try GAMMA v2 (Latest)
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 1. 打字机特效
+        // 1. 背景粒子特效
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles;
+
+        // 粒子配置
+        const particleConfig = {
+            particleColor: 'rgba(56, 189, 248, 0.15)', // 极淡的蓝色
+            linkColor: 'rgba(56, 189, 248, 0.05)',   // 更淡的连接线
+            particleAmount: 60,                        // 粒子数量
+            defaultRadius: 1.5,
+            variantRadius: 1,
+            defaultSpeed: 0.1,                         // 移动速度，非常缓慢
+            variantSpeed: 0.2,
+            linkRadius: 150,                           // 连接距离
+        };
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.speed = particleConfig.defaultSpeed + Math.random() * particleConfig.variantSpeed;
+                this.directionAngle = Math.floor(Math.random() * 360);
+                this.color = particleConfig.particleColor;
+                this.radius = particleConfig.defaultRadius + Math.random() * particleConfig.variantRadius;
+                this.vector = {
+                    x: Math.cos(this.directionAngle) * this.speed,
+                    y: Math.sin(this.directionAngle) * this.speed
+                };
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+            update() {
+                this.border();
+                this.x += this.vector.x;
+                this.y += this.vector.y;
+            }
+            border() {
+                if (this.x >= width || this.x <= 0) this.vector.x *= -1;
+                if (this.y >= height || this.y <= 0) this.vector.y *= -1;
+                if (this.x > width) this.x = width;
+                if (this.y > height) this.y = height;
+                if (this.x < 0) this.x = 0;
+                if (this.y < 0) this.y = 0;
+            }
+        }
+
+        function drawLines(p, arr) {
+            for (let i = 0; i < arr.length; i++) {
+                let distance = Math.sqrt(Math.pow(p.x - arr[i].x, 2) + Math.pow(p.y - arr[i].y, 2));
+                if (distance < particleConfig.linkRadius) {
+                    let opacity = 1 - distance / particleConfig.linkRadius;
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeStyle = `rgba(56, 189, 248, ${opacity * 0.1})`; // 动态透明度连接线
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(arr[i].x, arr[i].y);
+                    ctx.stroke();
+                    ctx.closePath();
+                }
+            }
+        }
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // 移动端减少粒子数量
+            particleConfig.particleAmount = width < 600 ? 30 : 60;
+            initParticles();
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleConfig.particleAmount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                drawLines(particles[i], particles);
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animateCanvas();
+
+
+        // 2. 打字机特效
         const textToType = "大家好，这里是 Daly 的个人网站。";
         const typingElement = document.getElementById('typing-text');
         let typeIndex = 0;
@@ -264,55 +412,23 @@
             if (typeIndex < textToType.length) {
                 typingElement.textContent += textToType.charAt(typeIndex);
                 typeIndex++;
-                setTimeout(typeWriter, 100); // 调整打字速度 (100ms)
+                setTimeout(typeWriter, 100); 
             }
         }
         
-        // 延迟 500ms 后开始打字
         setTimeout(typeWriter, 500);
 
-        // 2. 鼠标光晕追踪
+        // 3. 鼠标光晕追踪
         const cursorGlow = document.getElementById('cursor-glow');
         
         document.addEventListener('mousemove', (e) => {
-            // 使用 requestAnimationFrame 保证动画流畅
             requestAnimationFrame(() => {
                 cursorGlow.style.left = e.clientX + 'px';
                 cursorGlow.style.top = e.clientY + 'px';
             });
         });
 
-        // 3. 3D 卡片倾斜特效
-        const card = document.getElementById('tilt-card');
-        
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            // 计算鼠标在卡片内的相对位置
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            // 计算卡片中心点
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            
-            // 计算旋转角度 (最大倾斜 5 度，避免过于夸张)
-            const rotateX = ((y - centerY) / centerY) * -5;
-            const rotateY = ((x - centerX) / centerX) * 5;
-            
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-        });
-
-        // 鼠标移出时恢复原状
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-            // 增加一点回弹动画效果
-            card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)';
-        });
-        
-        // 鼠标进入时取消过渡动画，让跟随更跟手
-        card.addEventListener('mouseenter', () => {
-            card.style.transition = 'none';
-        });
+        // 4. 3D 卡片倾斜特效 (已按要求删除)
     </script>
 </body>
 </html>
