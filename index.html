@@ -1,4 +1,531 @@
-<p>大家好，我是daly。</p>
-<p>这是我的个人网站。</p>
-<p>你可以在以下网站找到我</p>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Receipt UI</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #ffffff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
+    #app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255,255,255,1) 0%, rgba(250,250,250,1) 36%, rgba(241,241,241,1) 100%);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    canvas.dragging {
+      cursor: grabbing;
+    }
+
+    .hint {
+      position: absolute;
+      left: 20px;
+      bottom: 18px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: rgba(0,0,0,0.62);
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      backdrop-filter: blur(6px);
+      user-select: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="hint">鼠标左键抓取小票任意位置，拖拽可弯曲、折叠并观察纸张回弹。</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.160.1/build/three.module.js';
+
+    const app = document.getElementById('app');
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    app.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0.25, 4.8);
+    camera.lookAt(0, -0.22, 0);
+
+    const ambient = new THREE.HemisphereLight(0xffffff, 0xe7e2da, 1.25);
+    scene.add(ambient);
+
+    const key = new THREE.DirectionalLight(0xffffff, 1.75);
+    key.position.set(2.8, 3.8, 4.4);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.left = -4;
+    key.shadow.camera.right = 4;
+    key.shadow.camera.top = 4;
+    key.shadow.camera.bottom = -4;
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0xfff7ec, 0.6);
+    fill.position.set(-2.6, 1.6, 3.2);
+    scene.add(fill);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.12 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -2.15;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    function createReceiptTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 2048;
+      const ctx = canvas.getContext('2d');
+
+      const base = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      base.addColorStop(0, '#fffef9');
+      base.addColorStop(0.45, '#fffdf7');
+      base.addColorStop(1, '#f9f6ed');
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 9000; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const a = Math.random() * 0.028;
+        const s = Math.random() * 1.5 + 0.35;
+        ctx.fillStyle = `rgba(80,70,45,${a})`;
+        ctx.fillRect(x, y, s, s);
+      }
+
+      ctx.strokeStyle = 'rgba(140,140,140,0.13)';
+      ctx.lineWidth = 1;
+      for (let y = 155; y < canvas.height; y += 122) {
+        ctx.beginPath();
+        ctx.moveTo(64, y);
+        ctx.lineTo(canvas.width - 64, y);
+        ctx.stroke();
+      }
+
+      const padX = 92;
+      let y = 150;
+      ctx.fillStyle = '#191919';
+      ctx.textAlign = 'left';
+
+      ctx.font = '700 52px system-ui, sans-serif';
+      ctx.fillText('THERMAL RECEIPT', padX, y);
+      y += 60;
+
+      ctx.font = '400 24px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.62)';
+      ctx.fillText('interactive paper simulation', padX, y);
+      y += 82;
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+      ctx.setLineDash([5, 6]);
+      ctx.beginPath();
+      ctx.moveTo(padX, y);
+      ctx.lineTo(canvas.width - padX, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      y += 110;
+
+      ctx.fillStyle = '#111';
+      ctx.font = '700 58px system-ui, sans-serif';
+      ctx.fillText('大家好，我是daly。', padX, y);
+      y += 104;
+      ctx.fillText('这是我的个人网站。', padX, y);
+      y += 130;
+
+      ctx.font = '400 27px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.72)';
+      const lines = [
+        '• 使用 Verlet integration 的柔性纸张约束网格',
+        '• 顶边整条固定，始终保持水平笔直',
+        '• 下半部分可拖拽、弯曲、折叠与回弹',
+        '• 表面模拟热敏纸轻微纤维与印刷质感',
+        '• WebGL 实时更新阴影、褶皱与高光'
+      ];
+      for (const line of lines) {
+        ctx.fillText(line, padX, y);
+        y += 62;
+      }
+
+      y += 28;
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath();
+      ctx.moveTo(padX, y);
+      ctx.lineTo(canvas.width - padX, y);
+      ctx.stroke();
+      y += 90;
+
+      ctx.font = '700 34px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.fillStyle = '#141414';
+      for (let i = 0; i < 17; i++) {
+        const left = String((Math.random() * 90 + 10).toFixed(2)).padStart(6, ' ');
+        const right = String((Math.random() * 9 + 1).toFixed(2)).padStart(5, ' ');
+        ctx.fillText(`${String(i + 1).padStart(2, '0')}   PAPER-DYNAMICS-${(i % 5) + 1}      ${left}      ${right}`, padX, y);
+        y += 46;
+      }
+
+      y += 24;
+      ctx.fillStyle = 'rgba(0,0,0,0.32)';
+      ctx.font = '500 22px system-ui, sans-serif';
+      ctx.fillText('Drag, bend, fold and let the paper settle naturally.', padX, y);
+      y += 90;
+
+      ctx.fillStyle = '#101010';
+      ctx.font = '700 118px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.fillText('|||||||||||||||||||||||||||||', padX, y);
+      y += 80;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.48)';
+      ctx.font = '400 20px system-ui, sans-serif';
+      ctx.fillText('daly personal website / paper physics demo', padX, y);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      return tex;
+    }
+
+    const receiptTexture = createReceiptTexture();
+
+    class Particle {
+      constructor(x, y, z, pinned = false) {
+        this.pos = new THREE.Vector3(x, y, z);
+        this.prev = new THREE.Vector3(x, y, z);
+        this.base = new THREE.Vector3(x, y, z);
+        this.acc = new THREE.Vector3();
+        this.invMass = pinned ? 0 : 1;
+        this.pinned = pinned;
+      }
+
+      addForce(f) {
+        if (this.invMass === 0) return;
+        this.acc.add(f);
+      }
+
+      integrate(dtSq, damping) {
+        if (this.invMass === 0) {
+          this.pos.copy(this.base);
+          this.prev.copy(this.base);
+          this.acc.set(0, 0, 0);
+          return;
+        }
+        const vel = this.pos.clone().sub(this.prev).multiplyScalar(damping);
+        const next = this.pos.clone().add(vel).add(this.acc.clone().multiplyScalar(dtSq));
+        this.prev.copy(this.pos);
+        this.pos.copy(next);
+        this.acc.set(0, 0, 0);
+      }
+    }
+
+    class Constraint {
+      constructor(a, b, stiffness = 1) {
+        this.a = a;
+        this.b = b;
+        this.rest = a.pos.distanceTo(b.pos);
+        this.stiffness = stiffness;
+      }
+
+      solve() {
+        const delta = new THREE.Vector3().subVectors(this.b.pos, this.a.pos);
+        const dist = delta.length();
+        if (dist < 1e-6) return;
+
+        const diff = (dist - this.rest) / dist;
+        const invA = this.a.invMass;
+        const invB = this.b.invMass;
+        const invSum = invA + invB;
+        if (invSum === 0) return;
+
+        const correction = delta.multiplyScalar(this.stiffness * diff);
+        if (invA > 0) this.a.pos.addScaledVector(correction, invA / invSum);
+        if (invB > 0) this.b.pos.addScaledVector(correction, -invB / invSum);
+      }
+    }
+
+    const receipt = {
+      width: 1.52,
+      height: 3.05,
+      segX: 26,
+      segY: 68,
+      particles: [],
+      constraints: []
+    };
+
+    function idx(x, y) {
+      return y * (receipt.segX + 1) + x;
+    }
+
+    function buildReceiptPhysics() {
+      receipt.particles.length = 0;
+      receipt.constraints.length = 0;
+
+      for (let y = 0; y <= receipt.segY; y++) {
+        const v = y / receipt.segY;
+        for (let x = 0; x <= receipt.segX; x++) {
+          const u = x / receipt.segX;
+          const px = (u - 0.5) * receipt.width;
+          const py = (0.5 - v) * receipt.height + 1.05;
+          const pz = 0;
+          const pinned = y === 0; // top edge entire row pinned: never just three points
+          receipt.particles.push(new Particle(px, py, pz, pinned));
+        }
+      }
+
+      const addConstraint = (x1, y1, x2, y2, stiff) => {
+        receipt.constraints.push(
+          new Constraint(receipt.particles[idx(x1, y1)], receipt.particles[idx(x2, y2)], stiff)
+        );
+      };
+
+      for (let y = 0; y <= receipt.segY; y++) {
+        for (let x = 0; x <= receipt.segX; x++) {
+          if (x < receipt.segX) addConstraint(x, y, x + 1, y, y === 0 ? 1.0 : 0.96);
+          if (y < receipt.segY) addConstraint(x, y, x, y + 1, y < 2 ? 1.0 : 0.92);
+          if (x < receipt.segX && y < receipt.segY) {
+            addConstraint(x, y, x + 1, y + 1, 0.52);
+            addConstraint(x + 1, y, x, y + 1, 0.52);
+          }
+          if (x < receipt.segX - 1) addConstraint(x, y, x + 2, y, 0.32);
+          if (y < receipt.segY - 1) addConstraint(x, y, x, y + 2, 0.3);
+        }
+      }
+    }
+
+    buildReceiptPhysics();
+
+    const geometry = new THREE.PlaneGeometry(receipt.width, receipt.height, receipt.segX, receipt.segY);
+    const material = new THREE.MeshPhysicalMaterial({
+      map: receiptTexture,
+      side: THREE.DoubleSide,
+      roughness: 0.88,
+      metalness: 0.0,
+      sheen: 0.18,
+      sheenRoughness: 0.92,
+      sheenColor: new THREE.Color('#fff7e4'),
+      clearcoat: 0.03,
+      clearcoatRoughness: 0.95,
+      transmission: 0.0,
+      thickness: 0.01
+    });
+
+    const receiptMesh = new THREE.Mesh(geometry, material);
+    receiptMesh.castShadow = true;
+    receiptMesh.receiveShadow = false;
+    scene.add(receiptMesh);
+
+    const backGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(receipt.width * 1.02, receipt.height * 1.02, 1, 1),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.15,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending
+      })
+    );
+    backGlow.position.z = -0.015;
+    receiptMesh.add(backGlow);
+
+    const raycaster = new THREE.Raycaster();
+    const mouseNdc = new THREE.Vector2();
+    const dragPlane = new THREE.Plane();
+    const dragPoint = new THREE.Vector3();
+    const pointerWorld = new THREE.Vector3();
+
+    let grabbed = null;
+    let grabOffset = new THREE.Vector3();
+    let currentTarget = new THREE.Vector3();
+    let lastTime = performance.now();
+    let accumulator = 0;
+
+    const sim = {
+      substep: 1 / 120,
+      damping: 0.988,
+      iterations: 7,
+      gravity: new THREE.Vector3(0, -13.5, 0),
+      airDrift: 0.12,
+      grabStrength: 0.42
+    };
+
+    function updateGeometry() {
+      const pos = geometry.attributes.position;
+      for (let i = 0; i < receipt.particles.length; i++) {
+        const p = receipt.particles[i].pos;
+        pos.setXYZ(i, p.x, p.y, p.z);
+      }
+      pos.needsUpdate = true;
+      geometry.computeVertexNormals();
+    }
+
+    function solveConstraints() {
+      for (let i = 0; i < sim.iterations; i++) {
+        for (let x = 0; x <= receipt.segX; x++) {
+          const p = receipt.particles[idx(x, 0)];
+          p.pos.copy(p.base);
+          p.prev.copy(p.base);
+        }
+
+        if (grabbed) {
+          grabbed.pos.lerp(currentTarget, sim.grabStrength);
+        }
+
+        for (let c = 0; c < receipt.constraints.length; c++) {
+          receipt.constraints[c].solve();
+        }
+
+        // hard-enforce entire top edge to remain perfectly straight and horizontal
+        for (let x = 0; x <= receipt.segX; x++) {
+          const p = receipt.particles[idx(x, 0)];
+          p.pos.copy(p.base);
+          p.prev.copy(p.base);
+        }
+      }
+    }
+
+    function simulate(dt) {
+      const dtSq = dt * dt;
+      const t = performance.now() * 0.001;
+
+      for (let i = 0; i < receipt.particles.length; i++) {
+        const p = receipt.particles[i];
+        if (p.invMass === 0) continue;
+
+        const wave = Math.sin(t * 1.5 + p.base.y * 2.3 + p.base.x * 3.0) * sim.airDrift;
+        p.addForce(sim.gravity);
+        p.addForce(new THREE.Vector3(wave * 0.22, 0, Math.cos(t * 1.1 + p.base.y * 2.6) * 0.08));
+        p.integrate(dtSq, sim.damping);
+      }
+
+      solveConstraints();
+    }
+
+    function setMouse(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouseNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    function intersectPointerOnPlane(plane, out) {
+      raycaster.setFromCamera(mouseNdc, camera);
+      return raycaster.ray.intersectPlane(plane, out);
+    }
+
+    function nearestParticle(worldPoint) {
+      let best = null;
+      let minDistSq = Infinity;
+      const thresholdSq = 0.19 * 0.19;
+
+      for (let i = 0; i < receipt.particles.length; i++) {
+        const p = receipt.particles[i];
+        if (p.pinned) continue;
+        const d = p.pos.distanceToSquared(worldPoint);
+        if (d < minDistSq) {
+          minDistSq = d;
+          best = p;
+        }
+      }
+      return minDistSq < thresholdSq ? best : null;
+    }
+
+    renderer.domElement.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      setMouse(event);
+
+      const hits = raycaster.setFromCamera(mouseNdc, camera), rayHits = raycaster.intersectObject(receiptMesh, false);
+      if (!rayHits.length) return;
+
+      const hit = rayHits[0];
+      const p = nearestParticle(hit.point);
+      if (!p) return;
+
+      grabbed = p;
+      currentTarget.copy(p.pos);
+      dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).clone().negate(), p.pos);
+      intersectPointerOnPlane(dragPlane, pointerWorld);
+      grabOffset.copy(p.pos).sub(pointerWorld);
+      renderer.domElement.classList.add('dragging');
+    });
+
+    window.addEventListener('pointermove', (event) => {
+      setMouse(event);
+      if (!grabbed) return;
+      if (intersectPointerOnPlane(dragPlane, dragPoint)) {
+        currentTarget.copy(dragPoint).add(grabOffset);
+        currentTarget.z = THREE.MathUtils.clamp(currentTarget.z, -1.1, 1.1);
+        currentTarget.x = THREE.MathUtils.clamp(currentTarget.x, -1.7, 1.7);
+        currentTarget.y = THREE.MathUtils.clamp(currentTarget.y, -2.5, 2.35);
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      grabbed = null;
+      renderer.domElement.classList.remove('dragging');
+    });
+
+    window.addEventListener('pointerleave', () => {
+      grabbed = null;
+      renderer.domElement.classList.remove('dragging');
+    });
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+
+      let delta = (now - lastTime) / 1000;
+      lastTime = now;
+      delta = Math.min(delta, 0.025);
+      accumulator += delta;
+
+      while (accumulator >= sim.substep) {
+        simulate(sim.substep);
+        accumulator -= sim.substep;
+      }
+
+      updateGeometry();
+      renderer.render(scene, camera);
+    }
+
+    updateGeometry();
+    requestAnimationFrame((t) => {
+      lastTime = t;
+      animate(t);
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
