@@ -156,16 +156,14 @@
       y += 110;
 
       ctx.fillStyle = '#111';
-      ctx.font = '700 58px system-ui, sans-serif';
-      ctx.fillText('大家好，我是daly。', padX, y);
-      y += 104;
-      ctx.fillText('这是我的个人网站。', padX, y);
-      y += 130;
+      ctx.font = '700 42px system-ui, sans-serif';
+      y += 70;
+      ctx.fillText('大家好，这里是Daly的个人网站。', padX, y);
+      y += 84;
 
       ctx.font = '400 27px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(0,0,0,0.72)';
             const introText = [
-        '大家好，这里是Daly的个人网站。',
         '🧑‍💻 关于我 (About Me)',
         '你好！我的主要研究方向是 AI 基础设施 (AI Infra) 与',
         '硬件加速器设计 (Accelerator Design)。我致力于探索',
@@ -177,57 +175,34 @@
         '端到端系统级评估平台 —— GAMMA。'
       ];
 
-      ctx.font = '700 46px system-ui, sans-serif';
+      ctx.font = '700 36px system-ui, sans-serif';
       ctx.fillStyle = '#111';
       ctx.fillText(introText[0], padX, y);
-      y += 88;
+      y += 72;
 
-      ctx.font = '700 42px system-ui, sans-serif';
-      ctx.fillStyle = '#111';
-      ctx.fillText(introText[1], padX, y);
-      y += 78;
-
-      ctx.font = '400 28px system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(0,0,0,0.75)';
-      for (let i = 2; i < introText.length; i++) {
+      ctx.font = '400 24px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.78)';
+      for (let i = 1; i < introText.length; i++) {
         const line = introText[i];
         if (!line) {
-          y += 26;
+          y += 24;
           continue;
         }
         ctx.fillText(line, padX, y);
-        y += 52;
+        y += 44;
       }
 
-      y += 28;
-      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      y += 30;
+
+      y += 20;
+      ctx.strokeStyle = 'rgba(0,0,0,0.24)';
       ctx.beginPath();
       ctx.moveTo(padX, y);
       ctx.lineTo(canvas.width - padX, y);
       ctx.stroke();
-      y += 90;
+      y += 980;
 
-      ctx.font = '700 34px ui-monospace, SFMono-Regular, Menlo, monospace';
-      ctx.fillStyle = '#141414';
-      for (let i = 0; i < 12; i++) {
-        const left = String((Math.random() * 90 + 10).toFixed(2)).padStart(6, ' ');
-        const right = String((Math.random() * 9 + 1).toFixed(2)).padStart(5, ' ');
-        ctx.fillText(`${String(i + 1).padStart(2, '0')}   PAPER-DYNAMICS-${(i % 5) + 1}      ${left}      ${right}`, padX, y);
-        y += 46;
-      }
-
-      y += 24;
-      ctx.fillStyle = 'rgba(0,0,0,0.32)';
-      ctx.font = '500 22px system-ui, sans-serif';
-      ctx.fillText('Drag, bend, fold and let the paper settle naturally.', padX, y);
-      y += 90;
-
-      ctx.fillStyle = '#101010';
-      ctx.font = '700 118px ui-monospace, SFMono-Regular, Menlo, monospace';
-      ctx.fillText('|||||||||||||||||||||||||||||', padX, y);
-      y += 80;
-
-      ctx.fillStyle = 'rgba(0,0,0,0.48)';
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
       ctx.font = '400 20px system-ui, sans-serif';
       ctx.fillText('daly personal website / paper physics demo', padX, y);
 
