@@ -31,28 +31,62 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.08), transparent 25%);
             overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 鼠标追踪光晕 */
+        #cursor-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            transition: opacity 0.3s ease;
         }
 
         .container {
             max-width: 800px;
             width: 90%;
             padding: 3rem 0;
-            animation: fadeIn 1s ease-out forwards;
+            z-index: 1; /* 确保在光晕之上 */
+            perspective: 1000px; /* 为 3D 倾斜提供透视 */
         }
 
-        /* 顶部欢迎语 */
+        /* 顶部打字机欢迎语 */
+        .greeting-container {
+            height: 60px; /* 固定高度防止打字时页面跳动 */
+            margin-bottom: 2rem;
+        }
+
         .greeting {
             font-size: 2.5rem;
             font-weight: 800;
-            margin-bottom: 2rem;
             letter-spacing: -0.05rem;
             background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        /* 打字机光标 */
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 2.5rem;
+            background-color: var(--accent-glow);
+            vertical-align: text-bottom;
+            margin-left: 5px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
         }
 
         /* 玻璃拟物卡片 */
@@ -64,12 +98,13 @@
             border-radius: 16px;
             padding: 2.5rem;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.1s ease, box-shadow 0.3s ease, border 0.3s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
         }
 
         .glass-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(56, 189, 248, 0.3);
         }
 
@@ -77,47 +112,60 @@
             font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            transform: translateZ(30px); /* 3D 浮雕效果 */
         }
 
         p {
             color: var(--text-muted);
             margin-bottom: 1.2rem;
             font-size: 1.05rem;
+            transform: translateZ(20px);
         }
 
-        /* 技能标签 */
+        /* 技能标签交互 */
         .tags {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin: 1.5rem 0 2.5rem 0;
+            transform: translateZ(25px);
         }
 
         .tag {
-            background: rgba(56, 189, 248, 0.1);
+            background: rgba(56, 189, 248, 0.05);
             color: var(--accent-glow);
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 0.9rem;
             font-family: 'Fira Code', monospace;
             border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: all 0.3s ease;
+            cursor: default;
         }
 
-        /* 特别强调的 GAMMA 项目 */
+        .tag:hover {
+            background: rgba(56, 189, 248, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(56, 189, 248, 0.2);
+        }
+
+        /* GAMMA 项目高亮与按钮 */
         .project-highlight {
             background: linear-gradient(to right, rgba(56, 189, 248, 0.05), rgba(129, 140, 248, 0.05));
             border-left: 4px solid var(--accent-glow);
             padding: 1.5rem;
             border-radius: 0 12px 12px 0;
             margin-top: 2rem;
+            transform: translateZ(30px);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .project-highlight p {
             margin-bottom: 0;
             color: var(--text-main);
+            transform: none;
         }
 
         .gamma-text {
@@ -128,27 +176,66 @@
             text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
         }
 
-        /* 动画 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* GAMMA 交互按钮 */
+        .btn-gamma {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--gradient-primary);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-gamma::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-gamma:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
+        }
+
+        .btn-gamma:hover::before {
+            left: 100%;
         }
 
         /* 响应式设计 */
         @media (max-width: 600px) {
+            .greeting-container { height: 80px; }
             .greeting { font-size: 2rem; }
             .glass-card { padding: 1.8rem; }
+            #cursor-glow { display: none; } /* 移动端隐藏鼠标追踪 */
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1 class="greeting">大家好，这里是 Daly 的个人网站。</h1>
+    <div id="cursor-glow"></div>
 
-        <div class="glass-card">
+    <div class="container">
+        <div class="greeting-container">
+            <h1 class="greeting" id="typing-text"></h1><span class="cursor"></span>
+        </div>
+
+        <div class="glass-card" id="tilt-card">
             <h2>🧑‍💻 关于我 (About Me)</h2>
-            <p>你好！我的主要研究方向是 <strong>AI 基础设施 (AI Infra)</strong> 与 <strong>硬件加速器设计 (Accelerator Design)</strong>。</p>
+            <p>你好！我的主要研究方向是 <strong>AI Infra</strong> 与 <strong>Accelerator Design</strong>。</p>
             <p>我致力于探索人工智能模型在底层硬件上的高效执行，专注于：</p>
             
             <div class="tags">
@@ -159,9 +246,73 @@
 
             <div class="project-highlight">
                 <p>在我的 GitHub 主页中，你可以重点关注我设计开发的端到端系统级评估平台 —— <span class="gamma-text">GAMMA</span> 🚀</p>
+                <a href="#" class="btn-gamma">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    Explore GAMMA
+                </a>
             </div>
         </div>
     </div>
 
+    <script>
+        // 1. 打字机特效
+        const textToType = "大家好，这里是 Daly 的个人网站。";
+        const typingElement = document.getElementById('typing-text');
+        let typeIndex = 0;
+
+        function typeWriter() {
+            if (typeIndex < textToType.length) {
+                typingElement.textContent += textToType.charAt(typeIndex);
+                typeIndex++;
+                setTimeout(typeWriter, 100); // 调整打字速度 (100ms)
+            }
+        }
+        
+        // 延迟 500ms 后开始打字
+        setTimeout(typeWriter, 500);
+
+        // 2. 鼠标光晕追踪
+        const cursorGlow = document.getElementById('cursor-glow');
+        
+        document.addEventListener('mousemove', (e) => {
+            // 使用 requestAnimationFrame 保证动画流畅
+            requestAnimationFrame(() => {
+                cursorGlow.style.left = e.clientX + 'px';
+                cursorGlow.style.top = e.clientY + 'px';
+            });
+        });
+
+        // 3. 3D 卡片倾斜特效
+        const card = document.getElementById('tilt-card');
+        
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            // 计算鼠标在卡片内的相对位置
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // 计算卡片中心点
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            // 计算旋转角度 (最大倾斜 5 度，避免过于夸张)
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        });
+
+        // 鼠标移出时恢复原状
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+            // 增加一点回弹动画效果
+            card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)';
+        });
+        
+        // 鼠标进入时取消过渡动画，让跟随更跟手
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'none';
+        });
+    </script>
 </body>
 </html>
