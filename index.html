@@ -164,16 +164,39 @@
 
       ctx.font = '400 27px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(0,0,0,0.72)';
-      const lines = [
-        '• 使用 Verlet integration 的柔性纸张约束网格',
-        '• 顶边整条固定，始终保持水平笔直',
-        '• 下半部分可拖拽、弯曲、折叠与回弹',
-        '• 表面模拟热敏纸轻微纤维与印刷质感',
-        '• WebGL 实时更新阴影、褶皱与高光'
+            const introText = [
+        '大家好，这里是Daly的个人网站。',
+        '🧑‍💻 关于我 (About Me)',
+        '你好！我的主要研究方向是 AI 基础设施 (AI Infra) 与',
+        '硬件加速器设计 (Accelerator Design)。我致力于探索',
+        '人工智能模型在底层硬件上的高效执行，专注于软硬件协同设计',
+        '（Hardware-Software Co-design）、AI 编译器优化',
+        '以及系统级架构仿真。',
+        '',
+        '在我的 GitHub 主页中，你可以重点关注我设计开发的',
+        '端到端系统级评估平台 —— GAMMA。'
       ];
-      for (const line of lines) {
+
+      ctx.font = '700 46px system-ui, sans-serif';
+      ctx.fillStyle = '#111';
+      ctx.fillText(introText[0], padX, y);
+      y += 88;
+
+      ctx.font = '700 42px system-ui, sans-serif';
+      ctx.fillStyle = '#111';
+      ctx.fillText(introText[1], padX, y);
+      y += 78;
+
+      ctx.font = '400 28px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      for (let i = 2; i < introText.length; i++) {
+        const line = introText[i];
+        if (!line) {
+          y += 26;
+          continue;
+        }
         ctx.fillText(line, padX, y);
-        y += 62;
+        y += 52;
       }
 
       y += 28;
@@ -186,7 +209,7 @@
 
       ctx.font = '700 34px ui-monospace, SFMono-Regular, Menlo, monospace';
       ctx.fillStyle = '#141414';
-      for (let i = 0; i < 17; i++) {
+      for (let i = 0; i < 12; i++) {
         const left = String((Math.random() * 90 + 10).toFixed(2)).padStart(6, ' ');
         const right = String((Math.random() * 9 + 1).toFixed(2)).padStart(5, ' ');
         ctx.fillText(`${String(i + 1).padStart(2, '0')}   PAPER-DYNAMICS-${(i % 5) + 1}      ${left}      ${right}`, padX, y);
